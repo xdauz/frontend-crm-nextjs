@@ -14,4 +14,11 @@ export const warehouseItemSchema = z.object({
     }),
 })
 
+export const supplierSchema = z.object({
+    id: z.number(),
+    name: z.string(),
+})
+
 export type WarehouseItem = z.infer<typeof warehouseItemSchema>
+export type Supplier = z.infer<typeof supplierSchema>
+ 

@@ -9,6 +9,7 @@ import { DataTableViewOptions } from "@/components/pages/warehouse/data-table-vi
 
 import { statuses } from "@/components/pages/warehouse/data"
 import { DataTableFacetedFilter } from "@/components/pages/warehouse/data-table-faceted-filter"
+import { AddWarehouseItemDialog } from "@/components/pages/warehouse/add-warehouse-item-dialog"
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
@@ -48,7 +49,8 @@ export function DataTableToolbar<TData>({
           </Button>
         )}
       </div>
-      <DataTableViewOptions table={table} />
+      {/* <DataTableViewOptions table={table} /> */}
+      <AddWarehouseItemDialog />
     </div>
   )
 }

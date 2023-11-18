@@ -102,7 +102,6 @@ export const columns: ColumnDef<WarehouseItem>[] = [
         enableSorting: false,
         enableHiding: false,
     },
-
     //Действие
     {
         id: "actions",
