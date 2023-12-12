@@ -74,21 +74,21 @@ export const columns: ColumnDef<WarehouseItem>[] = [
     },
     //Цена
     {
-        accessorKey: "purchase_price",
+        accessorKey: "price",
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Цена" />
         ),
-        cell: ({ row }) => <div className="w-[80px]">{row.original.purchase_price} {row.original.purchase_currency}</div>,
+        cell: ({ row }) => <div className="w-[80px]">{row.original.price} {row.original.currency}</div>,
         enableSorting: false,
         enableHiding: false,
     },
     //Дата прихода
     {
-        accessorKey: "purchase_date",
+        accessorKey: "date",
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Дата прихода" />
         ),
-        cell: ({ row }) => <div className="w-[80px]">{row.getValue("purchase_date")}</div>,
+        cell: ({ row }) => <div className="w-[80px]">{row.getValue("date")}</div>,
         enableSorting: false,
         enableHiding: false,
     },

@@ -1,32 +1,27 @@
-import { Button } from "@/components/ui/button"
+import React, { useEffect, useState } from 'react';
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import React, { useEffect } from "react"
-import * as z from "zod"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useToast } from "@/components/ui/use-toast"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Supplier, WarehouseItem } from "./schema"
-import { warehouseService } from "@/services/warehouseService"
-import AutocompleteInput from "@/components/pages/warehouse/autocomplete"
-import { PlusCircledIcon } from "@radix-ui/react-icons"
-import { Textarea } from "@/components/ui/textarea"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import * as z from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useToast } from "@/components/ui/use-toast";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Supplier, WarehouseItem } from "./schema";
+import { warehouseService } from "@/services/warehouseService";
+import AutocompleteInput from "@/components/pages/warehouse/autocomplete";
+import { Textarea } from "@/components/ui/textarea";
 
 const FormSchema = z.object({
   name: z.coerce.string({
     required_error: "Название керак ока",
-  }),
-  quantity: z.coerce.number({
-    required_error: "Выберите количество.",
   }),
   price: z.coerce.number({
     required_error: "Выберите приходную цену.",
@@ -34,57 +29,79 @@ const FormSchema = z.object({
   currency: z.string({
     required_error: "Выберите валюту.",
   }),
-  supplier: z.coerce.string({
+  supplier_id: z.string({
     required_error: "Выберите поставщика.",
   }),
-  serial_numbers: z.string({
+  serial_number: z.string({
     required_error: "Не указан серийный номер"
+  }),
+  status_key: z.string({
+    required_error: "Не указан статус"
   })
 });
 
-interface FormValues {
-  name: string;
-  quantity: number;
-  price: number;
-  currency: string;
-  supplier: string;
-  serial_numbers: string | undefined;
+interface EditWarehouseItemDialogProps {
+  isOpen: boolean;
+  warehouseItemId: string;
+  onClose: () => void;
 }
 
-export function AddWarehouseItemDialog() {
+export function EditWarehouseItemDialog({ isOpen, warehouseItemId, onClose }: EditWarehouseItemDialogProps) {
+  const { toast } = useToast();
+  const [warehouseItem, setWarehouseItem] = useState<WarehouseItem | null>(null);
+
+  // Set form default values
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
-    defaultValues: {
-      name: undefined,
-      quantity: undefined,
-      currency: undefined,
-      price: undefined,
-      supplier: undefined,
-      serial_numbers: undefined,
-    },
   });
 
-  const initialFormValuesRef = React.useRef<FormValues>(form.getValues());
-
+  // Make request to get warehouse/items/{id}
   useEffect(() => {
-    // Capture initial form values when the component mounts
-    initialFormValuesRef.current = form.getValues();
-  }, []);
+    const fetchData = async () => {
+      try {
+        // Make a call to get the item data based on the id
+        const itemData = await warehouseService.getWarehouseItem(warehouseItemId);
 
-  const { toast } = useToast();
+        // Pre-fill the form fields with the retrieved data
+        form.reset({
+          name: itemData.name,
+          price: itemData.price,
+          currency: itemData.currency,
+          serial_number: itemData.serial_number,
+          supplier_id: itemData.supplier.id.toString(),
+          status_key: itemData.status_key
+        });
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
-    toast({
-      title: "Success",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    });
+        setWarehouseItem(itemData);
+      } catch (error) {
+        console.error('Error fetching warehouse item:', error);
+        // Handle the error, show a message, etc.
+      }
+    };
 
-    form.reset(initialFormValuesRef.current);
-  }
+    if (isOpen) {
+      fetchData();
+    }
+  }, [isOpen, warehouseItemId, form]);
+
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    try {
+      // Make a call to update the item with the new data
+      await warehouseService.updateWarehouseItem(warehouseItemId, data);
+
+      toast({
+        title: "Success",
+        description:
+          <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+            <code className="text-white">{JSON.stringify(data, null, 2)}</code>
+          </pre>
+        ,
+      });
+    } catch (error) {
+      console.error("Error updating item:", error);
+      // Handle error, show toast or other user feedback
+    }
+  };
 
   const fetchSuppliers = async (inputValue?: string): Promise<Supplier[]> => {
     return warehouseService.getSuppliers(inputValue);
@@ -95,17 +112,10 @@ export function AddWarehouseItemDialog() {
   };
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="ml-2">
-          <PlusCircledIcon className="mr-2 h-4 w-4" />
-          Добавить товар
-        </Button>
-      </DialogTrigger>
-
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[725px]">
         <DialogHeader>
-          <DialogTitle>Добавление товара</DialogTitle>
+          <DialogTitle>Редактирование товара</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
@@ -130,17 +140,27 @@ export function AddWarehouseItemDialog() {
 
             <FormField
               control={form.control}
-              name="quantity"
+              name="status_key"
               render={({ field }) => (
                 <FormItem className="col-span-1">
-                  <FormLabel>Количество</FormLabel>
+                  <FormLabel>Статус</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="10" {...field} />
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem defaultChecked value="IN_STOCK">В наличии</SelectItem>
+                        <SelectItem value="SOLD">Продано</SelectItem>
+                        <SelectItem value="REFUND">Брак/Возврат</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
 
             <FormField
               control={form.control}
@@ -180,7 +200,7 @@ export function AddWarehouseItemDialog() {
 
             <FormField
               control={form.control}
-              name="supplier"
+              name="supplier_id"
               render={({ field }) => (
                 <FormItem className="col-span-4">
                   <FormLabel>Поставщик</FormLabel>
@@ -198,10 +218,10 @@ export function AddWarehouseItemDialog() {
 
             <FormField
               control={form.control}
-              name="serial_numbers"
+              name="serial_number"
               render={({ field }) => (
                 <FormItem className="col-span-4">
-                  <FormLabel>Серийные номеры</FormLabel>
+                  <FormLabel>Серийный номер</FormLabel>
                   <FormControl>
                     <Textarea placeholder="100-12341654" {...field} />
                   </FormControl>
@@ -209,12 +229,12 @@ export function AddWarehouseItemDialog() {
                 </FormItem>
               )}
             />
-            
+
             <DialogFooter className="col-span-4">
+              <Button type="submit">
+                Сохранить
+              </Button>
             </DialogFooter>
-            <Button type="submit">
-              Добавить
-            </Button>
           </form>
         </Form>
       </DialogContent>

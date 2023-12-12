@@ -5,7 +5,6 @@ import { Table } from "@tanstack/react-table"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { DataTableViewOptions } from "@/components/pages/warehouse/data-table-view-options"
 
 import { statuses } from "@/components/pages/warehouse/data"
 import { DataTableFacetedFilter } from "@/components/pages/warehouse/data-table-faceted-filter"
@@ -49,7 +48,7 @@ export function DataTableToolbar<TData>({
           </Button>
         )}
       </div>
-      {/* <DataTableViewOptions table={table} /> */}
+      
       <AddWarehouseItemDialog />
     </div>
   )
