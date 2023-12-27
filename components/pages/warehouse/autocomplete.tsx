@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState, useEffect, ChangeEvent } from 'react';
 import { debounce } from 'lodash';
 import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover';
@@ -42,7 +44,7 @@ const AutocompleteInput = <T extends {}>({
         // Make an API call with the entered value
         try {
             const newSuggestions = await fetchSuggestions(value);
-            setSuggestions(newSuggestions.slice(0, 3));
+            setSuggestions(newSuggestions.data);
             setIsListOpen(true);
         } catch (error) {
             console.error('Error fetching suggestions:', error);

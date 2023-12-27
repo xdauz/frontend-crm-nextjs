@@ -1,114 +1,105 @@
-import { WarehouseItem, Supplier } from "@/components/pages/warehouse/schema";
+import { WarehouseItem, Supplier, Product } from "@/components/pages/warehouse/schema";
 
-const API_ENDPOINT = 'http://api.crm.cyber.local';
+const API_ENDPOINT = 'http://api.crm.cyber.local/api';
 
-// Mocked responses for cases where the API request fails
-const MOCKED_WAREHOUSE_ITEM: WarehouseItem = {
-  "id": 12,
-  "name": "TP-Link 840N",
-  "serial_number": "1000054282",
-  "status_key": "in_stock",
-  "price": 15,
-  "date": "05.11.2023",
-  "currency": "USD",
-  "supplier": {
-    "id": 1,
-    "name": "Женя TP-Link"
+// Define a union type for the service response
+type ServiceResponse<T> = {
+  success: true;
+  data: T;
+} | {
+  success: false;
+  error: any;
+};
+
+const handleResponse = async <T>(response: Response): Promise<ServiceResponse<T>> => {
+  try {
+    if (!response.ok) {
+      throw new Error(`Request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    return { success: true, data };
+  } catch (error) {
+    return { success: false, error };
   }
 };
 
-const MOCKED_WAREHOUSE_ITEMS: WarehouseItem[] = [MOCKED_WAREHOUSE_ITEM];
-
-const MOCKED_SUPPLIERS: Supplier[] = [
-  {
-    "id": 2,
-    "name": "Asus A16"
-  },
-  {
-    "id": 1,
-    "name": "Женя TP-Link"
-  }
-];
-
 export const warehouseService = {
-  async getWarehouseItem(id: string): Promise<WarehouseItem> {
-    try {
-      const url = `${API_ENDPOINT}/warehouse/items/${id}`;
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch warehouse item with id ${id}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Error fetching warehouse item:", error);
-      return MOCKED_WAREHOUSE_ITEM; // Return mocked response on error
+  async getProducts(query?: string): Promise<ServiceResponse<Product[]>> {
+    let url = `${API_ENDPOINT}/products`;
+    if (query) {
+      url += `?q=${query}`;
     }
+
+    const response = await fetch(url);
+
+    return handleResponse<Product[]>(response);
   },
 
-  async getWarehouseItems(query?: string): Promise<WarehouseItem[]> {
-    try {
-      let url = `${API_ENDPOINT}/warehouse/items`;
-      if (query) {
-        url += `?query=${query}`;
-      }
-
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch warehouse items");
-      }
-
-      const items = await response.json();
-      // Validate the structure of `items` to match `WarehouseItem[]` if necessary
-
-      return items;
-    } catch (error) {
-      console.error("Error fetching warehouse items:", error);
-      return MOCKED_WAREHOUSE_ITEMS; // Return mocked response on error
-    }
+  async getWarehouseItem(id: string): Promise<ServiceResponse<WarehouseItem>> {
+    const url = `${API_ENDPOINT}/warehouse/items/${id}`;
+    const response = await fetch(url);
+    return handleResponse<WarehouseItem>(response);
   },
 
-  async getSuppliers(query?: string): Promise<Supplier[]> {
-    try {
-      let url = `${API_ENDPOINT}/suppliers`;
-      if (query) {
-        url += `?query=${query}`;
-      }
-
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch suppliers");
-      }
-
-      const suppliers = await response.json();
-      // Validate the structure of `suppliers` to match `Supplier[]` if necessary
-
-      return suppliers;
-    } catch (error) {
-      console.error("Error fetching suppliers:", error);
-      return MOCKED_SUPPLIERS; // Return mocked response on error
+  async getWarehouseItems(query?: string): Promise<ServiceResponse<WarehouseItem[]>> {
+    let url = `${API_ENDPOINT}/warehouse/items`;
+    if (query) {
+      url += `?q=${query}`;
     }
+
+    const response = await fetch(url);
+    return handleResponse<WarehouseItem[]>(response);
+  },
+
+  async getSuppliers(query?: string): Promise<ServiceResponse<Supplier[]>> {
+    let url = `${API_ENDPOINT}/suppliers`;
+    if (query) {
+      url += `?q=${query}`;
+    }
+
+    const response = await fetch(url);
+    return handleResponse<Supplier[]>(response);
   },
   
-  async updateWarehouseItem(id: string, data: Object): Promise<any> {
-    try {
-      const url = `${API_ENDPOINT}/warehouse/items/${id}`;
-      const response = await fetch(url, {
-        method: "PATCH",
-        body: JSON.stringify(data)
-      });
+  async storeWarehouseItem(data: object): Promise<ServiceResponse<any>> {
+    const url = `${API_ENDPOINT}/warehouse/items`;
+    const response = await fetch(url, {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch warehouse item with id ${data.id}`);
+    return handleResponse<any>(response);
+  },
+  
+  async updateWarehouseItem(id: string, data: object): Promise<ServiceResponse<any>> {
+    const url = `${API_ENDPOINT}/warehouse/items/${id}`;
+    const response = await fetch(url, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    });
+
+    return handleResponse<any>(response);
+  },
+
+  async deleteWarehouseItem(id: string): Promise<ServiceResponse<any>> {
+    const url = `${API_ENDPOINT}/warehouse/items/${id}`;
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: {
+        'Accept': 'application/json'
       }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Error fetching warehouse item:", error);
-      return true;
-    }
+    });
+    
+    return handleResponse<any>(response);
   },
 };

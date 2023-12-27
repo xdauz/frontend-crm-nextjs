@@ -11,7 +11,14 @@ export default function WarehousePage() {
 
   useEffect(() => {
     warehouseService.getWarehouseItems()
-      .then(setData)
+      .then(function (response) {
+        if (response.success) {
+          setData(response.data || []);
+        } else {
+          console.error('Error fetching warehouse items:', response.error);
+          setError('Failed to load data');
+        }
+      })
       .catch(error => {
         console.error('Error fetching warehouse items:', error);
         setError('Failed to load data');

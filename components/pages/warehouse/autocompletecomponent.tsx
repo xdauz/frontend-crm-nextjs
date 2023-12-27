@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect, ChangeEvent, useRef } from 'react';
 import { Input } from "@/components/ui/input";
 import _ from 'lodash';

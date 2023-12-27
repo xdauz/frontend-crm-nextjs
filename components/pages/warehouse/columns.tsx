@@ -1,3 +1,5 @@
+"use client"
+
 import { ColumnDef } from "@tanstack/react-table"
 
 import { Badge } from "@/components/ui/badge"
@@ -11,14 +13,16 @@ export const columns: ColumnDef<WarehouseItem>[] = [
     //Название
     {
         accessorKey: "name",
-        header: ({ column }) => (
-            <DataTableColumnHeader column={column} title="Название" />
-        ),
+        header: ({ column }) => {
+            return (
+                <DataTableColumnHeader column={column} title="Название" />
+            )
+        },
         cell: ({ row }) => {
             return (
                 <div className="flex space-x-2">
                     <span className="max-w-[500px] truncate font-medium">
-                        {row.getValue("name")}
+                        {row.original.product.name}
                     </span>
                 </div>
             )
@@ -30,7 +34,7 @@ export const columns: ColumnDef<WarehouseItem>[] = [
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Серийный номер" />
         ),
-        cell: ({ row }) => <div className="w-[80px]">{row.getValue("serial_number")}</div>,
+        cell: ({ row }) => <div className="w-[80px]">{row.original.serial_number}</div>,
         enableSorting: false,
         enableHiding: false,
     },
@@ -42,7 +46,7 @@ export const columns: ColumnDef<WarehouseItem>[] = [
         ),
         cell: ({ row }) => {
             const status = statuses.find(
-                (status) => status.value === row.getValue("status_key")
+                (status) => status.value === row.original.status_key
             )
 
             if (!status) {
@@ -78,7 +82,7 @@ export const columns: ColumnDef<WarehouseItem>[] = [
         header: ({ column }) => (
             <DataTableColumnHeader column={column} title="Цена" />
         ),
-        cell: ({ row }) => <div className="w-[80px]">{row.original.price} {row.original.currency}</div>,
+        cell: ({ row }) => <div className="w-[80px]">{row.original.price} {row.original.currency_key}</div>,
         enableSorting: false,
         enableHiding: false,
     },

@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import {
@@ -14,10 +16,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/components/ui/use-toast";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Supplier, WarehouseItem } from "./schema";
+import { Product, Supplier, WarehouseItem } from "./schema";
 import { warehouseService } from "@/services/warehouseService";
 import AutocompleteInput from "@/components/pages/warehouse/autocomplete";
 import { Textarea } from "@/components/ui/textarea";
+import { useRouter } from 'next/router';
 
 const FormSchema = z.object({
   name: z.coerce.string({
@@ -26,18 +29,16 @@ const FormSchema = z.object({
   price: z.coerce.number({
     required_error: "Выберите приходную цену.",
   }),
-  currency: z.string({
+  currency_key: z.string({
     required_error: "Выберите валюту.",
   }),
-  supplier_id: z.string({
+  supplier: z.string({
     required_error: "Выберите поставщика.",
-  }),
-  serial_number: z.string({
-    required_error: "Не указан серийный номер"
   }),
   status_key: z.string({
     required_error: "Не указан статус"
-  })
+  }),
+  serial_number: z.string().optional(),
 });
 
 interface EditWarehouseItemDialogProps {
@@ -64,15 +65,15 @@ export function EditWarehouseItemDialog({ isOpen, warehouseItemId, onClose }: Ed
 
         // Pre-fill the form fields with the retrieved data
         form.reset({
-          name: itemData.name,
-          price: itemData.price,
-          currency: itemData.currency,
-          serial_number: itemData.serial_number,
-          supplier_id: itemData.supplier.id.toString(),
-          status_key: itemData.status_key
+          name: itemData.data.product.name,
+          price: itemData.data.price,
+          currency_key: itemData.data.currency_key,
+          serial_number: itemData.data.serial_number || undefined,
+          supplier: itemData.data.supplier.name,
+          status_key: itemData.data.status_key
         });
 
-        setWarehouseItem(itemData);
+        setWarehouseItem(itemData.data);
       } catch (error) {
         console.error('Error fetching warehouse item:', error);
         // Handle the error, show a message, etc.
@@ -84,6 +85,7 @@ export function EditWarehouseItemDialog({ isOpen, warehouseItemId, onClose }: Ed
     }
   }, [isOpen, warehouseItemId, form]);
 
+  const router = useRouter();
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     try {
       // Make a call to update the item with the new data
@@ -97,6 +99,9 @@ export function EditWarehouseItemDialog({ isOpen, warehouseItemId, onClose }: Ed
           </pre>
         ,
       });
+
+      //Reload page
+      router.reload();
     } catch (error) {
       console.error("Error updating item:", error);
       // Handle error, show toast or other user feedback
@@ -104,11 +109,13 @@ export function EditWarehouseItemDialog({ isOpen, warehouseItemId, onClose }: Ed
   };
 
   const fetchSuppliers = async (inputValue?: string): Promise<Supplier[]> => {
-    return warehouseService.getSuppliers(inputValue);
+    const data = await warehouseService.getSuppliers(inputValue);
+    return data.data
   };
 
-  const fetchWarehouseItems = async (inputValue?: string): Promise<WarehouseItem[]> => {
-    return warehouseService.getWarehouseItems(inputValue);
+  const fetchProducts = async (inputValue?: string): Promise<Product[]> => {
+    const data = await warehouseService.getProducts(inputValue);
+    return data.data
   };
 
   return (
@@ -126,12 +133,12 @@ export function EditWarehouseItemDialog({ isOpen, warehouseItemId, onClose }: Ed
               render={({ field }) => (
                 <FormItem className="col-span-3">
                   <FormLabel>Название товара</FormLabel>
-                  <AutocompleteInput<WarehouseItem>
-                    fetchSuggestions={fetchWarehouseItems}
+                  <AutocompleteInput<Product>
+                    fetchSuggestions={fetchProducts}
                     placeholder="Select..."
                     field={field}
                     renderItem={(item) => item.name}
-                    getKey={(item) => item.id.toString()}
+                    getKey={(item) => item.name}
                   />
                   <FormMessage />
                 </FormItem>
@@ -145,14 +152,24 @@ export function EditWarehouseItemDialog({ isOpen, warehouseItemId, onClose }: Ed
                 <FormItem className="col-span-1">
                   <FormLabel>Статус</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                       <SelectTrigger>
-                        <SelectValue placeholder="..." />
+                        <SelectValue placeholder="Валюта..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem defaultChecked value="IN_STOCK">В наличии</SelectItem>
-                        <SelectItem value="SOLD">Продано</SelectItem>
-                        <SelectItem value="REFUND">Брак/Возврат</SelectItem>
+                        {[
+                          { value: "IN_STOCK", label: "В наличии" },
+                          { value: "SOLD", label: "Продано" },
+                          { value: "REFUND", label: "Брак/Возврат" },
+                        ].map((item) => (
+                          <SelectItem
+                            key={item.value}
+                            defaultChecked={field.value === item.value}
+                            value={item.value.toString()}
+                          >
+                            {item.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -178,18 +195,29 @@ export function EditWarehouseItemDialog({ isOpen, warehouseItemId, onClose }: Ed
 
             <FormField
               control={form.control}
-              name="currency"
+              name="currency_key"
               render={({ field }) => (
                 <FormItem className="col-span-1">
                   <FormLabel>Валюта</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <SelectTrigger>
-                        <SelectValue placeholder="..." />
+                        <SelectValue placeholder="Валюта..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem defaultChecked value="USD">USD</SelectItem>
-                        <SelectItem value="UZS">UZS</SelectItem>
+                        {[
+                          { value: "USD", label: "Доллар США" },
+                          { value: "UZS", label: "Сум" },
+                        ].map((item) => (
+                          <SelectItem
+                            key={item.value}
+                            defaultChecked={field.value === item.value}
+                            value={item.value.toString()}
+                          >
+                            {item.label}
+                          </SelectItem>
+                        ))}
+
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -200,7 +228,7 @@ export function EditWarehouseItemDialog({ isOpen, warehouseItemId, onClose }: Ed
 
             <FormField
               control={form.control}
-              name="supplier_id"
+              name="supplier"
               render={({ field }) => (
                 <FormItem className="col-span-4">
                   <FormLabel>Поставщик</FormLabel>
@@ -209,7 +237,7 @@ export function EditWarehouseItemDialog({ isOpen, warehouseItemId, onClose }: Ed
                     placeholder="Select..."
                     field={field}
                     renderItem={(item) => item.name}
-                    getKey={(item) => item.id.toString()}
+                    getKey={(item) => item.name}
                   />
                   <FormMessage />
                 </FormItem>

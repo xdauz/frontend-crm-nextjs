@@ -14,6 +14,8 @@ import {
 
 import { EditWarehouseItemDialog } from './edit-warehouse-item-dialog'; // Импортируем новый компонент
 import { WarehouseItem } from './schema';
+import { warehouseService } from '@/services/warehouseService';
+import { useRouter } from 'next/router';
 
 interface DataTableRowActionsProps<WarehouseItem> {
   row: Row<WarehouseItem>
@@ -32,6 +34,12 @@ export function DataTableRowActions<WarehouseItem>({
     setIsEditDialogOpen(false);
   };
 
+  const router = useRouter();
+  const handleDeleteClick = async () => {
+    await warehouseService.deleteWarehouseItem(row.original?.id);
+    router.reload();
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -47,14 +55,14 @@ export function DataTableRowActions<WarehouseItem>({
         <DropdownMenuContent align="end" className="w-[160px]">
           <DropdownMenuItem onClick={handleEditClick}>Редактировать</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={handleDeleteClick}>
             Удалить
             <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <EditWarehouseItemDialog warehouseItemId={row.id} isOpen={isEditDialogOpen} onClose={handleEditDialogClose} />
+      <EditWarehouseItemDialog warehouseItemId={row.original?.id} isOpen={isEditDialogOpen} onClose={handleEditDialogClose} />
     </>
   );
 }

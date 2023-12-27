@@ -7,7 +7,11 @@ export const warehouseItemSchema = z.object({
     status_key: z.string(),
     price: z.number(),
     date: z.string(),
-    currency: z.string(),
+    currency_key: z.string(),
+    product: z.object({
+        id: z.number(),
+        name: z.string()
+    }),
     supplier: z.object({
         id: z.number(),
         name: z.string()
@@ -19,6 +23,11 @@ export const supplierSchema = z.object({
     name: z.string(),
 })
 
+export const productSchema = z.object({
+    id: z.number(),
+    name: z.string(),
+})
+
 export type WarehouseItem = z.infer<typeof warehouseItemSchema>
 export type Supplier = z.infer<typeof supplierSchema>
- 
+export type Product = z.infer<typeof productSchema>

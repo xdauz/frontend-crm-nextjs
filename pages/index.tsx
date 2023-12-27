@@ -1,6 +1,4 @@
 import { Metadata } from "next"
-import { Button } from "@/components/ui/button"
-import { CalendarDateRangePicker } from "@/components/ui/date-range-picker"
 import { DashboardOverviewPage } from "@/components/pages/dashboard/overview";
 import { DashboardReports } from "@/components/pages/dashboard/reports";
 import { DashboardAnalytics } from "@/components/pages/dashboard/analytics";

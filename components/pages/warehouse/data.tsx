@@ -1,17 +1,19 @@
+"use client"
+
 export const statuses = [
     {
-        value: "in_stock",
+        value: "IN_STOCK",
         label: "В наличии",
         color: "secondary"
 
     },
     {
-        value: "sold",
+        value: "SOLD",
         label: "Продано",
         color: "default"
     },
     {
-        value: "refund",
+        value: "REFUND",
         label: "Брак",
         color: "destructive"
     },
