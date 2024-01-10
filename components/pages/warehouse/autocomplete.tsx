@@ -44,7 +44,7 @@ const AutocompleteInput = <T extends {}>({
         // Make an API call with the entered value
         try {
             const newSuggestions = await fetchSuggestions(value);
-            setSuggestions(newSuggestions.data);
+            setSuggestions(newSuggestions);
             setIsListOpen(true);
         } catch (error) {
             console.error('Error fetching suggestions:', error);
@@ -109,7 +109,8 @@ const AutocompleteInput = <T extends {}>({
                         <CommandGroup>
                             {suggestions.map((suggestion) => (
                                 <CommandItem
-                                    value={getKey(suggestion)}
+                                    key={getKey(suggestion)}
+                                    value={field.value}
                                     onSelect={() => handleSelect(suggestion)}
                                 >
                                     {renderItem(suggestion)}

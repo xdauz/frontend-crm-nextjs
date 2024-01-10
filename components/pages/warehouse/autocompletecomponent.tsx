@@ -35,7 +35,7 @@ const AutocompleteComponent: React.FC = () => {
     if (isTyping) {
       debouncedFetchSuggestions(inputValue);
     }
-  }, [inputValue, isTyping]);
+  }, [inputValue, isTyping, debouncedFetchSuggestions]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

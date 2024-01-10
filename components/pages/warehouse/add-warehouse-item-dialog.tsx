@@ -28,7 +28,7 @@ const FormSchema = z.object({
   name: z.coerce.string({
     required_error: "Название керак ока",
   }),
-  quantity: z.coerce.number().optional(),
+  quantity: z.coerce.string().optional(),
   price: z.coerce.number({
     required_error: "Выберите приходную цену.",
   }),
@@ -43,11 +43,11 @@ const FormSchema = z.object({
 
 interface FormValues {
   name: string;
-  quantity: string | undefined;
+  quantity?: string | undefined;
   price: number;
   currency_key: string;
   supplier: string;
-  serial_numbers: string | undefined;
+  serial_numbers?: string | undefined;
 }
 
 export function AddWarehouseItemDialog() {
@@ -69,7 +69,7 @@ export function AddWarehouseItemDialog() {
   useEffect(() => {
     // Capture initial form values when the component mounts
     initialFormValuesRef.current = form.getValues();
-  }, []);
+  });
 
   const { toast } = useToast();
   const router = useRouter();
@@ -104,12 +104,12 @@ export function AddWarehouseItemDialog() {
 
   const fetchSuppliers = async (inputValue?: string): Promise<Supplier[]> => {
     const data = await warehouseService.getSuppliers(inputValue);
-    return data.data
+    return data.data.data
   };
 
   const fetchProducts = async (inputValue?: string): Promise<Product[]> => {
     const data = await warehouseService.getProducts(inputValue);
-    return data.data
+    return data.data.data
   };
 
   return (
